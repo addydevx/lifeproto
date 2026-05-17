@@ -1,0 +1,180 @@
+// Prisma schema for NIGHT//OS
+//
+// Design notes:
+// - We use Supabase Auth's `auth.users` table for identity (managed by Supabase).
+//   Our `Profile` table extends it 1:1, keyed by the same UUID.
+// - Stats is a separate table (not columns on Profile) because we may eventually
+//   want time-series stat history and this keeps Profile lean.
+// - TaskCompletion is the event log — it's what powers streak calculation,
+//   weekly telemetry, and XP totals. Profile.totalXp is a denormalized cache
+//   we update on each completion (read-heavy, write-rare pattern).
+// - We use cuid() for our own primary keys, but Profile.id uses the Supabase
+//   auth user UUID directly (so we don't need a separate mapping table).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Mirror of Supabase auth.users. id == auth.users.id (UUID).
+model Profile {
+  id        String   @id @db.Uuid
+  callsign  String   @unique
+  rank      String   @default("INITIATE")
+  totalXp   Int      @default(0)
+  streak    Int      @default(0)
+  longestStreak Int  @default(0)
+  lastActiveDate DateTime?
+  onboardedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stats        Stats?
+  tasks        Task[]
+  quests       Quest[]
+  rewards      Reward[]
+  completions  TaskCompletion[]
+  redemptions  Redemption[]
+
+  @@map("profiles")
+}
+
+model Stats {
+  id         String  @id @default(cuid())
+  profileId  String  @unique @db.Uuid
+  health     Int     @default(10)
+  mind       Int     @default(10)
+  discipline Int     @default(10)
+  social     Int     @default(10)
+  updatedAt  DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("stats")
+}
+
+enum Vital {
+  health
+  mind
+  discipline
+  social
+}
+
+enum TaskCadence {
+  daily      // recurring every day
+  weekly     // recurring every week
+  oneshot    // single occurrence
+}
+
+model Task {
+  id          String      @id @default(cuid())
+  profileId   String      @db.Uuid
+  title       String
+  description String?
+  vital       Vital
+  vitalGain   Int         @default(1)
+  xp          Int         @default(50)
+  cadence     TaskCadence @default(daily)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  profile     Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  completions TaskCompletion[]
+
+  @@index([profileId, active])
+  @@map("tasks")
+}
+
+model TaskCompletion {
+  id          String   @id @default(cuid())
+  taskId      String
+  profileId   String   @db.Uuid
+  completedAt DateTime @default(now())
+  xpAwarded   Int
+  vitalGained Int
+  vital       Vital
+
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, completedAt])
+  @@index([taskId, completedAt])
+  @@map("task_completions")
+}
+
+enum QuestStatus {
+  active
+  completed
+  abandoned
+}
+
+model Quest {
+  id          String      @id @default(cuid())
+  profileId   String      @db.Uuid
+  codename    String
+  description String
+  status      QuestStatus @default(active)
+  totalXp     Int         @default(500)
+  reward      String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  completedAt DateTime?
+
+  profile  Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  chapters QuestChapter[]
+
+  @@index([profileId, status])
+  @@map("quests")
+}
+
+model QuestChapter {
+  id          String   @id @default(cuid())
+  questId     String
+  title       String
+  description String?
+  order       Int
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+
+  quest Quest @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([questId, order])
+  @@index([questId])
+  @@map("quest_chapters")
+}
+
+model Reward {
+  id          String  @id @default(cuid())
+  profileId   String  @db.Uuid
+  name        String
+  description String?
+  cost        Int
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  profile     Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  redemptions Redemption[]
+
+  @@index([profileId, active])
+  @@map("rewards")
+}
+
+model Redemption {
+  id         String   @id @default(cuid())
+  rewardId   String
+  profileId  String   @db.Uuid
+  xpSpent    Int
+  redeemedAt DateTime @default(now())
+
+  reward  Reward  @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, redeemedAt])
+  @@map("redemptions")
+}

@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "JetBrains Mono", "Courier New", monospace;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
+  --font-sans: "Rajdhani", system-ui, sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  background: #05070d;
+  color: #e8f1ff;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0, 229, 255, 0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255, 0, 128, 0.06), transparent 70%),
+    linear-gradient(180deg, #05070d 0%, #0a0e1a 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay applied to body for ambient CRT feel */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 229, 255, 0.025) 0px,
+    rgba(0, 229, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+/* Vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 229, 255, 0.03);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 229, 255, 0.3);
+  color: #ffffff;
+}
+
+@layer components {
+  /* HUD panel — the foundational container */
+  .hud-panel {
+    @apply relative border border-cyan/20 bg-ink-900/40 backdrop-blur-sm;
+    background-image:
+      linear-gradient(135deg, rgba(0, 229, 255, 0.03) 0%, transparent 50%),
+      linear-gradient(rgba(0, 229, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 229, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 20px 20px, 20px 20px;
+  }
+
+  /* Corner brackets — appears on panels we want to feel "targeted" */
+  .hud-corners::before,
+  .hud-corners::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: theme("colors.cyan.DEFAULT");
+  }
+  .hud-corners::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .hud-corners::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+
+  /* HUD label — small caps with tracking */
+  .hud-label {
+    @apply font-mono text-[10px] uppercase tracking-hud text-fg-tertiary;
+  }
+
+  /* Tactical button */
+  .hud-btn {
+    @apply relative inline-flex items-center gap-2 border border-cyan/40 bg-cyan/5
+           px-5 py-2.5 font-mono text-xs uppercase tracking-hud text-cyan
+           transition-all duration-150 hover:bg-cyan/15 hover:border-cyan/70
+           hover:shadow-[0_0_20px_rgba(0,229,255,0.3)]
+           active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .hud-btn-danger {
+    @apply border-magenta/40 bg-magenta/5 text-magenta
+           hover:bg-magenta/15 hover:border-magenta/70
+           hover:shadow-[0_0_20px_rgba(255,0,128,0.3)];
+  }
+
+  /* Glitch text effect */
+  .glitch-text {
+    position: relative;
+    display: inline-block;
+  }
+  .glitch-text::before,
+  .glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  .glitch-text::before {
+    color: #ff0080;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translateX(-2px);
+    animation: glitch-1 3s infinite linear alternate-reverse;
+  }
+  .glitch-text::after {
+    color: #00e5ff;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    transform: translateX(2px);
+    animation: glitch-2 2.5s infinite linear alternate-reverse;
+  }
+
+  @keyframes glitch-1 {
+    0%, 90%, 100% { transform: translateX(0); }
+    92% { transform: translateX(-3px); }
+    94% { transform: translateX(2px); }
+    96% { transform: translateX(-1px); }
+  }
+  @keyframes glitch-2 {
+    0%, 90%, 100% { transform: translateX(0); }
+    93% { transform: translateX(3px); }
+    95% { transform: translateX(-2px); }
+    97% { transform: translateX(1px); }
+  }
+}
+
+@layer utilities {
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.6), 0 0 20px rgba(0, 229, 255, 0.3);
+  }
+  .text-glow-magenta {
+    text-shadow: 0 0 10px rgba(255, 0, 128, 0.6), 0 0 20px rgba(255, 0, 128, 0.3);
+  }
+  .border-glow-cyan {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.3), inset 0 0 10px rgba(0, 229, 255, 0.05);
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+   AMBIENT HUD ANIMATIONS — Phase 5
+   Subtle, slow, mostly subliminal. Makes the screen feel "alive."
+   ─────────────────────────────────────────────────────────────── */
+
+/* Slow scan line that sweeps top-to-bottom every 9s. Anchored to body. */
+body > .ambient-scan {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.4), transparent);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+  pointer-events: none;
+  z-index: 98;
+  animation: ambient-scan 9s linear infinite;
+}
+
+@keyframes ambient-scan {
+  0% { top: -2%; opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { top: 102%; opacity: 0; }
+}
+
+/* Grid pulse — modulates the body background overlay opacity */
+body > .ambient-grid-pulse {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 97;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  animation: ambient-grid-pulse 6s ease-in-out infinite;
+}
+
+@keyframes ambient-grid-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+/* Idle glitch — applied to elements with .idle-glitch. Subtle, every 30-90s. */
+@keyframes idle-glitch {
+  0%, 96%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
+  96.5% { transform: translate(-1px, 0); filter: hue-rotate(15deg); }
+  97% { transform: translate(1px, 0); filter: hue-rotate(-10deg); }
+  97.5% { transform: translate(0); filter: hue-rotate(0deg); }
+}
+.idle-glitch {
+  animation: idle-glitch 45s linear infinite;
+}
+
+/* Reduced motion preference — kill ambient animations */
+@media (prefers-reduced-motion: reduce) {
+  body > .ambient-scan,
+  body > .ambient-grid-pulse,
+  .idle-glitch {
+    animation: none !important;
+  }
+}
+
+/* Skeleton shimmer + boot bar animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes boot-progress {
+  0%   { left: -33%; }
+  100% { left: 100%; }
+}
