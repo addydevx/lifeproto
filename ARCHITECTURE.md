@@ -113,13 +113,13 @@ Notes:
 sequenceDiagram
     actor User
     participant UI as TaskRow<br/>(Client Component)
-    participant Opt as useOptimistic
+    participant OptHook as useOptimistic
     participant SA as completeTaskAction
     participant DB as Postgres
     participant Cache as Next.js<br/>Cache
 
     User->>UI: Click task
-    UI->>Opt: Apply optimistic toggle
+    UI->>OptHook: Apply optimistic toggle
     UI-->>User: Checkbox flips instantly
     UI->>UI: spawnXpAt() floating +XP
     UI->>SA: completeTaskAction(taskId)
