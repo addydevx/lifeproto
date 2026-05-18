@@ -87,10 +87,10 @@ export default function DashboardLoading() {
               <div className="flex h-12 items-end gap-1">
                 {Array.from({ length: 7 }).map((_, i) => (
                   <Skeleton
-                    key={i}
-                    className="flex-1"
-                    style={{ height: `${30 + (i * 9) % 70}%` } as React.CSSProperties}
-                  />
+  key={i}
+  className="flex-1"
+  style={{ height: `${30 + (i * 9) % 70}%` }}
+/>
                 ))}
               </div>
             </div>

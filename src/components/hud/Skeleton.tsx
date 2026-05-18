@@ -2,15 +2,17 @@ import { cn } from "@/lib/utils";
 
 interface SkeletonProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
 /**
  * Base skeleton block with a cyan-tinted shimmer.
  * Use for any rectangular content placeholder.
  */
-export function Skeleton({ className }: SkeletonProps) {
+export function Skeleton({ className, style }: SkeletonProps) {
   return (
     <div
+      style={style}
       className={cn(
         "relative overflow-hidden bg-ink-700/40",
         "after:absolute after:inset-0 after:-translate-x-full",
