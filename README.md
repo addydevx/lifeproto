@@ -17,7 +17,8 @@ A gamified life-management application built on Next.js 15. NIGHT//OS reframes d
 ![alt text](image-1.png)
 - Quest log with chapter progression
 ![alt text](image-2.png)
-- Onboarding tour
+- Level up animation
+![alt text](<lifeproto level up.PNG>)
 
 ---
 
