@@ -1,58 +1,207 @@
 # NIGHT//OS
 
-A cyberpunk life-RPG: turn your daily tasks into directives, your goals into quests, and your stats into a system you can level up.
+> Turn your life into a system. Track quests, level up, earn rewards.
 
-## Phase 1 — DONE
+A gamified life-management application built on Next.js 15. NIGHT//OS reframes daily habits as "directives," long-term goals as "quest lines," and self-rewards as XP-gated unlocks, wrapped in a cyberpunk HUD aesthetic.
 
-Project scaffold, full cyberpunk design system, all page routes, dashboard with mock data.
+**Live demo:** [https://lifeproto.vercel.app](https://lifeproto.vercel.app)
 
-What's working:
-- Landing page (`/`) with animated boot, glitch text, feature blocks
-- Auth pages (`/login`, `/signup`) — UI only, not wired yet
-- Dashboard (`/dashboard`) — XP gauge, streak combo, vital stats, daily directives, active quests, weekly telemetry chart
-- Quests, Skills, Rewards, Profile pages — polished stubs ready for Phase 4 logic
-- HUD design system: panels with corner brackets, scanline overlay, glitch text, animated stat bars, custom scrollbar, three fonts (Orbitron display, JetBrains Mono, Rajdhani body)
+---
 
-## Running it
+## Screenshots
+
+*Placeholder for screenshots:*
+- Landing page with glitch animation
+![alt text](image.png)
+- Dashboard with stats and daily directives
+![alt text](image-1.png)
+- Quest log with chapter progression
+![alt text](image-2.png)
+- Onboarding tour
+
+---
+
+## What it does
+
+NIGHT//OS turns the abstract idea of "self-improvement" into a measurable game:
+
+- **Daily directives.** Recurring tasks tagged with a vital (Health, Mind, Discipline, Social). Complete them to earn XP and grow the relevant stat.
+- **Quest lines.** Long-form objectives broken into chapters. Complete chapters individually; XP is awarded per chapter; the quest auto-completes when the last chapter is done.
+- **Skill matrix.** Read-only view of your four vital stats and how they've moved over the last 30 days.
+- **Reward cache.** Define rewards you actually enjoy (a gaming session, a movie night) and price them in XP. Earn XP through directives and quests, spend it on the things you love.
+- **Streak tracking.** Consecutive-day discipline with combo multipliers and milestone celebrations (7, 14, 30, 60, 100 days).
+- **Onboarding tour.** First-time users see a 6-step walkthrough explaining each module.
+
+---
+
+## Tech stack
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| **Framework** | Next.js 15 (App Router) | Server Components for fast reads, Server Actions for type-safe writes |
+| **Language** | TypeScript (strict mode) | Type safety across the full stack |
+| **Database** | PostgreSQL (Supabase-hosted) | Mature, free tier, integrated auth |
+| **ORM** | Prisma 6 | Type-safe queries generated from schema |
+| **Auth** | Supabase Auth | Email/password, JWT sessions, mature primitives |
+| **Styling** | Tailwind CSS v3 | Utility-first, custom HUD design tokens |
+| **Animation** | Framer Motion | Declarative animations, used for HUD effects |
+| **State** | Zustand | Lightweight global stores for telemetry and celebrations |
+| **Icons** | Lucide React | Consistent line-icon library |
+| **Hosting** | Vercel | Native Next.js hosting, edge functions, CDN |
+| **Security** | Row Level Security (Postgres) | Defense-in-depth at the database layer |
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart LR
+    User[User Browser]
+    Vercel[Vercel Edge<br/>Next.js App]
+    Supabase[Supabase<br/>Auth + Postgres]
+
+    User -->|HTTPS| Vercel
+    Vercel -->|Server Components<br/>Server Actions| Supabase
+    Vercel -->|Auth session<br/>via cookies| User
+```
+
+The application is fundamentally a server-rendered Next.js app. Pages fetch data server-side via Prisma, render to HTML, and stream to the browser. Client-side hydration handles interactivity. Mutations go through Server Actions, which run on Vercel's serverless functions and write to Postgres via Prisma.
+
+**See [ARCHITECTURE.md](./ARCHITECTURE.md) for the deep dive.**
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+ and npm
+- A Supabase account (free tier works)
+- Git
+
+### Local setup
 
 ```bash
+# 1. Clone the repo
+git clone https://github.com/addydevx/lifeproto.git
 cd lifeproto
+
+# 2. Install dependencies
 npm install
+
+# 3. Copy the env template and fill it in
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials (see below)
+
+# 4. Push the schema to your Supabase database
+npm run db:push
+
+# 5. Run the dev server
 npm run dev
 ```
 
-Then open http://localhost:3000
+Open [http://localhost:3000](http://localhost:3000).
 
-## What's next
+### Environment variables
 
-- **Phase 2** — Supabase auth + Prisma schema + database wiring. You'll need to create a free Supabase project and add keys to `.env.local`.
-- **Phase 3** — Replace mock data with real DB reads via Server Components.
-- **Phase 4** — Full skill tree, quest creation UI, reward redemption flow, achievement system.
-- **Phase 5** — Server Actions for completing tasks, awarding XP, updating stats; real-time sync.
+```ini
+# Supabase project URL, found in Supabase dashboard at Settings, API
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 
-## Stack
+# Anon (public) key. Safe to expose; protected by RLS
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
-- Next.js 15 (App Router) + React 19 RC
-- TypeScript strict mode
-- Tailwind CSS v4
-- Framer Motion for HUD animations
-- Lucide for icons
-- (Phase 2) Supabase + Prisma + Postgres
+# Pooled DB connection. Used by Prisma at runtime
+DATABASE_URL="postgresql://postgres.YOUR_PROJECT:PASSWORD@aws-x-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=5"
 
-## Design system tokens
+# Direct DB connection. Used by Prisma for migrations
+DIRECT_URL="postgresql://postgres.YOUR_PROJECT:PASSWORD@aws-x-region.pooler.supabase.com:5432/postgres"
+```
 
-Defined in `tailwind.config.ts`:
-- `ink-*` — base canvas (deep slate, not black)
-- `cyan` — primary HUD signal
-- `magenta` — streak/critical accent
-- `vital-{health|mind|discipline|social|quest}` — stat colors
+### Available scripts
 
-Reusable HUD primitives in `src/components/hud/`:
-- `HUDPanel` — labeled container with corner brackets + status indicator
-- `XPGauge` — level + XP-to-next-level
-- `StreakDisplay` — streak count + combo multiplier
-- `StatBar` — animated vital bar per stat
-- `TaskRow` — single directive with status/XP/vital gain
-- `QuestCard` — quest line with chapter progress
-- `GlitchText` — chromatic-aberration glitch animation
-- `SystemClock` — live clock with HUD styling
+```bash
+npm run dev              # Start dev server
+npm run build            # Production build (type-checks too)
+npm run start            # Run production build locally
+npm run lint             # ESLint
+npm run db:push          # Sync Prisma schema to database
+npm run db:studio        # Open Prisma Studio (visual DB editor)
+npm run db:wipe-starters # Wipe seed data for a callsign
+```
+
+---
+
+## Key engineering decisions
+
+The full rationale is in [DECISIONS.md](./DECISIONS.md), but in brief:
+
+1. **Server Components for reads, Server Actions for writes.** No client-side data fetching, no React Query. Pages are dynamic but cacheable per-request.
+2. **Prisma over raw SQL or Drizzle.** Generated types catch entire classes of bugs at compile time.
+3. **Supabase Auth + Prisma instead of Supabase client.** Auth handled by Supabase SSR helpers, but all data access goes through Prisma for type safety.
+4. **Optimistic UI via React 19's `useOptimistic` hook.** Task toggles update instantly; the server confirms or rolls back.
+5. **Row Level Security as a safety net.** Prisma uses an admin connection (bypassing RLS), but RLS is enabled to protect any future direct API access.
+6. **Single shared layout for authenticated pages** via a route group `(app)`. Avoids duplicate sidebar/topbar code across five routes.
+
+---
+
+## What's intentionally not built
+
+Being explicit about scope:
+
+- **No mobile app.** The web app is responsive enough to install as a PWA, but there's no native iOS or Android client.
+- **No real-time sync.** If you have the app open on two devices, changes on one don't push to the other. Refresh required.
+- **No skill tree branching.** The Skill Matrix shows the four flat vitals; sub-skills with prerequisites were de-scoped.
+- **No notifications or reminders.** This is a pull-based system, not a push-based one.
+- **No data export.** Your data lives in Supabase. You can pull it out via the Supabase API or `pg_dump`, but there's no in-app export button.
+- **No achievement system.** Streak milestones trigger celebration overlays, but there's no persistent badge or achievement log.
+
+---
+
+## Project structure
+
+```
+lifeproto/
+├── prisma/
+│   └── schema.prisma           # Database schema (single source of truth)
+├── scripts/
+│   └── wipe-starters.ts        # One-time cleanup script
+├── src/
+│   ├── actions/                # Server Actions (writes only)
+│   │   ├── auth.ts             # Signup, login, logout
+│   │   ├── tasks.ts            # Task CRUD + completion
+│   │   ├── quests.ts           # Quest CRUD + chapter completion
+│   │   ├── rewards.ts          # Reward CRUD + redemption
+│   │   └── onboarding.ts       # Mark onboarding complete
+│   ├── app/                    # Next.js App Router
+│   │   ├── (auth)/             # Auth routes (login, signup)
+│   │   ├── (app)/              # Authenticated routes (dashboard, quests, etc.)
+│   │   ├── globals.css         # Global styles + HUD CSS
+│   │   ├── layout.tsx          # Root layout
+│   │   └── page.tsx            # Landing page
+│   ├── components/
+│   │   ├── forms/              # Modal forms (Task, Quest, Reward)
+│   │   ├── hud/                # HUD design system primitives
+│   │   └── layout/             # Sidebar, TopBar
+│   ├── lib/
+│   │   ├── auth.ts             # requireProfile() gatekeeper
+│   │   ├── db/                 # Prisma client + queries
+│   │   ├── stores/             # Zustand stores
+│   │   └── supabase/           # Supabase client variants
+│   └── middleware.ts           # Auth middleware
+├── next.config.mjs
+├── tailwind.config.ts
+└── package.json
+```
+
+---
+
+## License
+
+Personal project. Not currently licensed for redistribution.
+
+---
+
+## Acknowledgments
+
+Built with [Next.js](https://nextjs.org/), [Supabase](https://supabase.com/), [Prisma](https://prisma.io/), and [Tailwind CSS](https://tailwindcss.com/). Cyberpunk aesthetic inspired by tactical interfaces in games and films.
